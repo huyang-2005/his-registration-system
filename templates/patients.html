@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}患者建档 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>新建门诊档案</h2>
+  <form method="post" action="{{ url_for('patient_create') }}">
+    <div class="form-row">
+      <div class="field"><label>姓名 *</label><input name="name" required></div>
+      <div class="field"><label>性别 *</label>
+        <select name="gender" required><option value="男">男</option><option value="女">女</option></select>
+      </div>
+      <div class="field"><label>出生日期</label><input type="date" name="birth_date"></div>
+      <div class="field"><label>证件号</label><input name="id_card"></div>
+      <div class="field"><label>联系电话</label><input name="phone"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>患者类别</label>
+        <select name="patient_type">
+          <option value="自费">自费</option>
+          <option value="医保">医保</option>
+          <option value="新农合">新农合</option>
+        </select>
+      </div>
+      <div class="field"><label>医保号（医保患者必填）</label><input name="insurance_no"></div>
+      <div class="field" style="flex:1"><label>联系地址</label><input name="address" style="width:100%"></div>
+      <button type="submit">保存建档</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>患者档案查询</h2>
+  <form method="get" class="form-row">
+    <div class="field"><label>关键字（姓名 / 病历号 / 证件号）</label>
+      <input name="keyword" value="{{ keyword }}" style="min-width:260px">
+    </div>
+    <button type="submit">查询</button>
+    <a class="btn btn-plain" href="{{ url_for('patients') }}">重置</a>
+  </form>
+  <table>
+    <thead>
+      <tr><th>病历号</th><th>姓名</th><th>性别</th><th>出生日期</th><th>证件号</th>
+          <th>电话</th><th>类别</th><th>医保号</th></tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td>{{ p.medical_record_no }}</td><td>{{ p.name }}</td><td>{{ p.gender }}</td>
+        <td>{{ p.birth_date }}</td><td>{{ p.id_card }}</td><td>{{ p.phone }}</td>
+        <td>{{ p.patient_type }}</td><td>{{ p.insurance_no or '-' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">暂无数据</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

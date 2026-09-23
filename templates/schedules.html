@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}排班号源 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>新增医生排班</h2>
+  <form method="post" action="{{ url_for('schedule_create') }}">
+    <div class="form-row">
+      <div class="field"><label>医生 *</label>
+        <select name="doctor_id" required>
+          <option value="">-- 请选择 --</option>
+          {% for d in doctors %}
+          <option value="{{ d.doctor_id }}">{{ d.dept_name }} / {{ d.doctor_name }}（{{ d.title }}）</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>出诊日期 *</label><input type="date" name="work_date" value="{{ work_date }}" required></div>
+      <div class="field"><label>时段 *</label>
+        <select name="time_period" required><option>上午</option><option>下午</option><option>夜班</option></select>
+      </div>
+      <div class="field"><label>号别 *</label>
+        <select name="level_id" required>
+          {% for l in levels %}
+          <option value="{{ l.level_id }}">{{ l.level_name }}（{{ '%.2f'|format(l.reg_fee + l.diagnosis_fee) }}元）</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>总号源 *</label><input type="number" name="total_quota" min="1" value="20" required></div>
+      <button type="submit">新增排班</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>排班与号源</h2>
+  <form method="get" class="form-row">
+    <div class="field"><label>查询日期</label>
+      <input type="date" name="work_date" value="{{ work_date }}" onchange="this.form.submit()">
+    </div>
+    <button type="submit">查询</button>
+  </form>
+  <table>
+    <thead>
+      <tr><th>科室</th><th>医生</th><th>时段</th><th>号别</th><th>总号源</th>
+          <th>已用</th><th>剩余</th><th>状态</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for s in schedules %}
+      <tr>
+        <td>{{ s.dept_name }}</td><td>{{ s.doctor_name }}</td><td>{{ s.time_period }}</td>
+        <td>{{ s.level_name }}</td><td>{{ s.total_quota }}</td><td>{{ s.used_quota }}</td>
+        <td>{{ s.remaining }}</td>
+        <td>
+          {% if s.status == '正常' %}<span class="tag tag-ok">正常</span>
+          {% else %}<span class="tag tag-warn">停诊</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('schedule_stop', schedule_id=s.schedule_id) }}" style="display:inline">
+            <button class="btn-sm {% if s.status == '正常' %}btn-danger{% else %}btn-success{% endif %}" type="submit">
+              {% if s.status == '正常' %}停诊{% else %}恢复{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">该日期暂无排班</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

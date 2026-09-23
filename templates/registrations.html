@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}挂号查询 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>挂号综合查询</h2>
+  <form method="get" class="form-row">
+    <div class="field"><label>开始日期</label><input type="date" name="start" value="{{ start }}"></div>
+    <div class="field"><label>结束日期</label><input type="date" name="end" value="{{ end }}"></div>
+    <div class="field"><label>科室</label>
+      <select name="dept_id">
+        <option value="">全部</option>
+        {% for d in depts %}
+        <option value="{{ d.dept_id }}" {% if dept_id|string == d.dept_id|string %}selected{% endif %}>{{ d.dept_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>医生</label>
+      <select name="doctor_id">
+        <option value="">全部</option>
+        {% for d in doctors %}
+        <option value="{{ d.doctor_id }}" {% if doctor_id|string == d.doctor_id|string %}selected{% endif %}>{{ d.doctor_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>状态</label>
+      <select name="status">
+        <option value="">全部</option>
+        <option value="已挂号" {% if status == '已挂号' %}selected{% endif %}>已挂号</option>
+        <option value="已就诊" {% if status == '已就诊' %}selected{% endif %}>已就诊</option>
+        <option value="已退号" {% if status == '已退号' %}selected{% endif %}>已退号</option>
+      </select>
+    </div>
+    <div class="field"><label>患者姓名 / 病历号 / 单号</label>
+      <input name="keyword" value="{{ keyword }}">
+    </div>
+    <button type="submit">查询</button>
+    <a class="btn btn-plain" href="{{ url_for('registrations') }}">重置</a>
+  </form>
+</div>
+
+<div class="card">
+  <h2>挂号记录（{{ regs|length }} 条）</h2>
+  <table>
+    <thead>
+      <tr><th>挂号单号</th><th>病历号</th><th>患者</th><th>类别</th><th>科室</th>
+          <th>医生</th><th>号别</th><th>序号</th><th>费用</th><th>状态</th>
+          <th>收费</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for r in regs %}
+      <tr>
+        <td>{{ r.reg_no }}</td>
+        <td>{{ r.medical_record_no }}</td>
+        <td>{{ r.patient_name }}</td>
+        <td>{{ r.patient_type }}</td>
+        <td>{{ r.dept_name }}</td>
+        <td>{{ r.doctor_name }}</td>
+        <td>{{ r.level_name }}</td>
+        <td>{{ r.queue_no }}</td>
+        <td>{{ '%.2f'|format(r.fee) }}</td>
+        <td>
+          {% if r.status == '已挂号' %}<span class="tag tag-ok">已挂号</span>
+          {% elif r.status == '已就诊' %}<span class="tag tag-muted">已就诊</span>
+          {% else %}<span class="tag tag-warn">已退号</span>{% endif %}
+        </td>
+        <td>
+          {% if r.pay_status == '已支付' %}{{ r.pay_type }}
+          {% elif r.pay_status == '已退费' %}<span class="tag tag-warn">已退费</span>
+          {% else %}<span class="muted">未收费</span>{% endif %}
+        </td>
+        <td>
+          {% if r.status == '已挂号' %}
+          <form method="post" action="{{ url_for('registration_cancel', reg_id=r.reg_id) }}"
+                style="display:inline" onsubmit="return confirm('确认退号？')">
+            <button class="btn-sm btn-danger" type="submit">退号</button>
+          </form>
+          {% endif %}
+          {% if not r.pay_status and r.status != '已退号' %}
+          <form method="post" action="{{ url_for('registration_pay', reg_id=r.reg_id) }}"
+                style="display:inline">
+            <select name="pay_type" class="btn-sm">
+              <option>现金</option><option>医保</option><option>微信</option><option>支付宝</option>
+            </select>
+            <button class="btn-sm btn-success" type="submit">收费</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="12" class="muted">无匹配的挂号记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

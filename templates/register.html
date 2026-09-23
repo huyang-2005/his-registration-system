@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}门诊挂号 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>门诊挂号</h2>
+  <form method="get" class="form-row">
+    <div class="field"><label>挂号方式</label>
+      <select name="reg_type" onchange="this.form.submit()">
+        <option value="现场" {% if reg_type == '现场' %}selected{% endif %}>现场挂号</option>
+        <option value="预约" {% if reg_type == '预约' %}selected{% endif %}>预约挂号</option>
+      </select>
+    </div>
+    <div class="field"><label>就诊日期</label>
+      <input type="date" name="work_date" value="{{ work_date }}" onchange="this.form.submit()">
+    </div>
+    <button type="submit">刷新号源</button>
+  </form>
+
+  <form method="post" action="{{ url_for('register_submit') }}">
+    <input type="hidden" name="reg_type" value="{{ reg_type }}">
+    <div class="form-row">
+      <div class="field" style="flex:1">
+        <label>选择患者 *</label>
+        <select name="patient_id" required style="min-width:320px">
+          <option value="">-- 请选择患者 --</option>
+          {% for p in patients %}
+          <option value="{{ p.patient_id }}">{{ p.medical_record_no }} {{ p.name }}（{{ p.patient_type }}）</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:1">
+        <label>选择号源（仅显示有剩余号源且正常出诊的排班）*</label>
+        <select name="schedule_id" required style="min-width:520px">
+          <option value="">-- 请选择号源 --</option>
+          {% for s in schedules %}
+          <option value="{{ s.schedule_id }}">
+            {{ s.dept_name }} / {{ s.doctor_name }}（{{ s.title }}）/ {{ s.time_period }}
+            / {{ s.level_name }} / 费用 {{ '%.2f'|format(s.total_fee) }} 元 / 剩余 {{ s.remaining }} 号
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit">确认挂号</button>
+    </div>
+    {% if not schedules %}
+    <p class="muted">该日期暂无可挂号源（可能已满号或停诊）。</p>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

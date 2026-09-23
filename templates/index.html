@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}首页 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>今日门诊概览（{{ today }}）</h2>
+  <div class="stats">
+    <div class="stat"><div class="num">{{ stats.today_reg }}</div><div class="lbl">今日挂号量</div></div>
+    <div class="stat"><div class="num">{{ stats.today_refund }}</div><div class="lbl">今日退号量</div></div>
+    <div class="stat"><div class="num">{{ '%.2f'|format(stats.today_income) }}</div><div class="lbl">今日收费金额（元）</div></div>
+    <div class="stat"><div class="num">{{ stats.schedule_today }}</div><div class="lbl">今日排班数</div></div>
+    <div class="stat"><div class="num">{{ stats.patient_total }}</div><div class="lbl">建档患者总数</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>功能导航</h2>
+  <p class="muted">本系统实现《医院信息系统基本功能规范》中门诊挂号分系统的核心业务。</p>
+  <p>
+    <a class="btn" href="{{ url_for('patients') }}">患者建档</a>
+    <a class="btn" href="{{ url_for('register') }}">门诊挂号</a>
+    <a class="btn" href="{{ url_for('registrations') }}">挂号查询 / 退号 / 收费</a>
+    <a class="btn" href="{{ url_for('schedules') }}">排班与号源维护</a>
+    <a class="btn" href="{{ url_for('report') }}">门诊量统计报表</a>
+  </p>
+</div>
+{% endblock %}
