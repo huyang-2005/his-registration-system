@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Annotated, Optional
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, FastAPI, Form, Query, Request
+from fastapi import APIRouter, FastAPI, Form, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -508,6 +508,76 @@ def schedule_stop(request: Request, schedule_id: int):
     add_log(OP_ADMIN, "排班", "schedule:%d" % schedule_id, "状态改为" + new_status)
     flash(request, "排班状态已更新为：" + new_status, "success")
     return redirect(url_for(request, "schedules", work_date=s["work_date"]))
+
+
+# ------------------------------------------------------------------
+# 排班号源查询接口（JSON）
+# ------------------------------------------------------------------
+@router.get("/api/schedule/department")
+def api_schedule_department(
+    dept_name: str = Query(""),
+    date: str = Query(""),
+):
+    dept_name = dept_name.strip()
+    date = date.strip()
+
+    if not dept_name:
+        raise HTTPException(status_code=400, detail="dept_name 参数不能为空")
+    if not date:
+        raise HTTPException(status_code=400, detail="date 参数不能为空")
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="date 格式错误，应为 YYYY-MM-DD")
+
+    dept = query_one("SELECT * FROM department WHERE dept_name = ?", (dept_name,))
+    if not dept:
+        raise HTTPException(status_code=404, detail="科室不存在：" + dept_name)
+
+    rows = query(
+        "SELECT s.schedule_id, s.doctor_id, s.time_period, s.status, "
+        "       s.total_quota, s.used_quota, (s.total_quota - s.used_quota) AS remaining, "
+        "       d.doctor_name, d.title, dep.dept_name, lv.level_name "
+        "FROM doctor_schedule s "
+        "JOIN doctor d ON d.doctor_id = s.doctor_id "
+        "JOIN department dep ON dep.dept_id = s.dept_id "
+        "JOIN registration_level lv ON lv.level_id = s.level_id "
+        "WHERE dep.dept_name = ? AND s.work_date = ? "
+        "ORDER BY s.doctor_id, s.time_period",
+        (dept_name, date),
+    )
+
+    doctors = {}
+    order = []
+    for r in rows:
+        remaining = r["remaining"] if r["status"] == "正常" else 0
+        if r["doctor_id"] not in doctors:
+            doctors[r["doctor_id"]] = {
+                "doctor_id": r["doctor_id"],
+                "doctor_name": r["doctor_name"],
+                "title": r["title"],
+                "total_remaining": 0,
+                "schedules": [],
+            }
+            order.append(r["doctor_id"])
+        if r["status"] == "正常":
+            doctors[r["doctor_id"]]["total_remaining"] += remaining
+        doctors[r["doctor_id"]]["schedules"].append({
+            "schedule_id": r["schedule_id"],
+            "time_period": r["time_period"],
+            "level_name": r["level_name"],
+            "total_quota": r["total_quota"],
+            "used_quota": r["used_quota"],
+            "remaining": remaining,
+            "status": r["status"],
+        })
+
+    return {
+        "dept_name": dept_name,
+        "date": date,
+        "doctor_count": len(order),
+        "doctors": [doctors[d] for d in order],
+    }
 
 
 # ------------------------------------------------------------------
