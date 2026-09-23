@@ -8,13 +8,13 @@ from typing import Annotated, Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, FastAPI, Form, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
-from db import execute, query, query_one
+from db import execute, get_conn, query, query_one
 
 app = FastAPI(title="门诊挂号分系统")
 app.add_middleware(SessionMiddleware, secret_key="his-outpatient-registration-demo")
@@ -577,6 +577,162 @@ def api_schedule_department(
         "date": date,
         "doctor_count": len(order),
         "doctors": [doctors[d] for d in order],
+    }
+
+
+# ------------------------------------------------------------------
+# 门诊挂号接口（JSON，事务 + 行锁防超号）
+# ------------------------------------------------------------------
+class RegisterApiModel(BaseModel):
+    schedule_id: int
+    patient_name: str
+    patient_id_card: str
+    phone: str
+
+
+def api_error(code: int, message: str):
+    return JSONResponse(status_code=code, content={"code": code, "message": message})
+
+
+def derive_gender(id_card: str):
+    if len(id_card) == 18 and id_card[16].isdigit():
+        return "男" if int(id_card[16]) % 2 == 1 else "女"
+    return "男"
+
+
+@router.post("/api/register")
+def api_register(data: RegisterApiModel):
+    name = data.patient_name.strip()
+    id_card = data.patient_id_card.strip()
+    phone = data.phone.strip()
+
+    if not name:
+        return api_error(400, "患者姓名不能为空")
+    if not id_card:
+        return api_error(400, "身份证号不能为空")
+    if not phone:
+        return api_error(400, "手机号不能为空")
+
+    conn = get_conn()
+    try:
+        # BEGIN IMMEDIATE 立即获取写锁，串行化并发挂号，防止超号
+        conn.execute("BEGIN IMMEDIATE")
+
+        s = conn.execute(
+            "SELECT s.*, d.doctor_name, dep.dept_name, lv.level_name, "
+            "       (lv.reg_fee + lv.diagnosis_fee) AS total_fee "
+            "FROM doctor_schedule s "
+            "JOIN doctor d ON d.doctor_id = s.doctor_id "
+            "JOIN department dep ON dep.dept_id = s.dept_id "
+            "JOIN registration_level lv ON lv.level_id = s.level_id "
+            "WHERE s.schedule_id = ?",
+            (data.schedule_id,),
+        ).fetchone()
+
+        if not s:
+            conn.rollback()
+            return api_error(404, "排班不存在")
+        if s["status"] != "正常":
+            conn.rollback()
+            return api_error(400, "该号源已停诊，无法挂号")
+
+        remaining = s["total_quota"] - s["used_quota"]
+        if remaining <= 0:
+            conn.rollback()
+            return api_error(400, "号源已满")
+
+        p = conn.execute(
+            "SELECT * FROM patient WHERE id_card = ?", (id_card,)
+        ).fetchone()
+        if p:
+            patient = {
+                "patient_id": p["patient_id"],
+                "medical_record_no": p["medical_record_no"],
+                "name": p["name"],
+                "id_card": p["id_card"],
+                "phone": p["phone"],
+            }
+            patient_id = p["patient_id"]
+        else:
+            mr_prefix = "MR" + datetime.now().strftime("%Y%m%d")
+            mr_row = conn.execute(
+                "SELECT COUNT(*) AS c FROM patient WHERE medical_record_no LIKE ?",
+                (mr_prefix + "%",),
+            ).fetchone()
+            medical_record_no = "%s%04d" % (mr_prefix, mr_row["c"] + 1)
+            cur = conn.execute(
+                "INSERT INTO patient (medical_record_no, name, gender, id_card, phone) "
+                "VALUES (?,?,?,?,?)",
+                (medical_record_no, name, derive_gender(id_card), id_card, phone),
+            )
+            patient_id = cur.lastrowid
+            patient = {
+                "patient_id": patient_id,
+                "medical_record_no": medical_record_no,
+                "name": name,
+                "id_card": id_card,
+                "phone": phone,
+            }
+
+        reg_prefix = "GH" + datetime.now().strftime("%Y%m%d") + "A"
+        reg_row = conn.execute(
+            "SELECT COUNT(*) AS c FROM registration WHERE reg_no LIKE ?",
+            (reg_prefix + "%",),
+        ).fetchone()
+        reg_no = "%s%03d" % (reg_prefix, reg_row["c"] + 1)
+
+        queue_row = conn.execute(
+            "SELECT COALESCE(MAX(queue_no), 0) AS m FROM registration WHERE schedule_id = ?",
+            (data.schedule_id,),
+        ).fetchone()
+        queue_no = queue_row["m"] + 1
+
+        cur = conn.execute(
+            "INSERT INTO registration (reg_no, patient_id, dept_id, doctor_id, "
+            "schedule_id, level_id, reg_type, queue_no, status, fee, operator_id) "
+            "VALUES (?,?,?,?,?,?,?,?,'已挂号',?,?)",
+            (reg_no, patient_id, s["dept_id"], s["doctor_id"], data.schedule_id,
+             s["level_id"], "现场", queue_no, s["total_fee"], OP_REGISTRAR),
+        )
+        reg_id = cur.lastrowid
+
+        conn.execute(
+            "UPDATE doctor_schedule SET used_quota = used_quota + 1 WHERE schedule_id = ?",
+            (data.schedule_id,),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    return {
+        "code": 200,
+        "message": "挂号成功",
+        "data": {
+            "reg_id": reg_id,
+            "reg_no": reg_no,
+            "queue_no": queue_no,
+            "reg_type": "现场",
+            "fee": s["total_fee"],
+            "status": "已挂号",
+            "patient": patient,
+            "schedule": {
+                "schedule_id": data.schedule_id,
+                "doctor_id": s["doctor_id"],
+                "doctor_name": s["doctor_name"],
+                "dept_id": s["dept_id"],
+                "dept_name": s["dept_name"],
+                "work_date": s["work_date"],
+                "time_period": s["time_period"],
+                "level_name": s["level_name"],
+                "total_quota": s["total_quota"],
+                "used_quota": s["used_quota"] + 1,
+                "remaining": s["total_quota"] - (s["used_quota"] + 1),
+                "status": s["status"],
+            },
+        },
     }
 
 
