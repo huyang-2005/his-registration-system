@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}统计报表 · 门诊挂号分系统{% endblock %}
+{% block title %}统计报表 · 门诊挂号与收费发药分系统{% endblock %}
 {% block content %}
 <div class="card">
-  <h2>门诊量统计报表</h2>
+  <h2>门诊量与收费统计报表</h2>
   <form method="get" class="form-row">
     <div class="field"><label>开始日期</label><input type="date" name="start" value="{{ start }}"></div>
     <div class="field"><label>结束日期</label><input type="date" name="end" value="{{ end }}"></div>
@@ -13,20 +13,22 @@
     <div class="stat"><div class="num">{{ total }}</div><div class="lbl">挂号总数</div></div>
     <div class="stat"><div class="num">{{ refund }}</div><div class="lbl">退号总数</div></div>
     <div class="stat"><div class="num">{{ refund_rate }}%</div><div class="lbl">退号率</div></div>
-    <div class="stat"><div class="num">{{ '%.2f'|format(income) }}</div><div class="lbl">收费合计（元）</div></div>
+    <div class="stat"><div class="num">{{ '%.2f'|format(income) }}</div><div class="lbl">挂号收费（元）</div></div>
+    <div class="stat"><div class="num">{{ presc_count }}</div><div class="lbl">处方数量</div></div>
+    <div class="stat"><div class="num">{{ '%.2f'|format(presc_income) }}</div><div class="lbl">处方收费（元）</div></div>
   </div>
 </div>
 
 <div class="card">
   <h3>科室工作量与收入</h3>
   <table>
-    <thead><tr><th>科室</th><th>挂号量</th><th>退号量</th><th>收费金额（元）</th></tr></thead>
+    <thead><tr><th>科室</th><th>挂号量</th><th>退号量</th><th>挂号收费（元）</th><th>处方收费（元）</th></tr></thead>
     <tbody>
       {% for d in by_dept %}
       <tr><td>{{ d.dept_name }}</td><td>{{ d.total }}</td><td>{{ d.refund }}</td>
-          <td>{{ '%.2f'|format(d.income) }}</td></tr>
+          <td>{{ '%.2f'|format(d.income) }}</td><td>{{ '%.2f'|format(d.presc_income) }}</td></tr>
       {% else %}
-      <tr><td colspan="4" class="muted">该时间段无数据</td></tr>
+      <tr><td colspan="5" class="muted">该时间段无数据</td></tr>
       {% endfor %}
     </tbody>
   </table>

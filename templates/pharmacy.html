@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}药房发药 · 门诊挂号与收费发药分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>待发药处方（{{ prescriptions|length }} 张）</h2>
+  <table>
+    <thead><tr><th>处方号</th><th>挂号单</th><th>患者</th><th>医生</th><th>诊断</th><th>明细</th><th>金额</th><th>发药</th></tr></thead>
+    <tbody>
+      {% for p in prescriptions %}
+      <tr>
+        <td>{{ p.presc_no }}</td>
+        <td>{{ p.reg_no }}</td>
+        <td>{{ p.patient_name }}</td>
+        <td>{{ p.doctor_name }}</td>
+        <td>{{ p.diagnosis }}</td>
+        <td>
+          {% for item in items.get(p.presc_id, []) %}
+            <div>{{ item.drug_name }}（{{ item.spec }}）×{{ item.quantity }}</div>
+          {% endfor %}
+        </td>
+        <td>{{ '%.2f'|format(p.total_amount) }}</td>
+        <td>
+          <form method="post" action="{{ url_for('prescription_dispense', presc_id=p.presc_id) }}"
+                onsubmit="return confirm('确认发药？')">
+            <button class="btn-sm btn-success" type="submit">确认发药</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">暂无待发药处方</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>低库存预警（&lt; 10）</h2>
+  <table>
+    <thead><tr><th>药品</th><th>规格</th><th>当前库存</th></tr></thead>
+    <tbody>
+      {% for d in low_stock %}
+      <tr><td>{{ d.generic_name }}</td><td>{{ d.spec }}</td><td><span class="tag tag-warn">{{ d.stock }}</span></td></tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">库存充足</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>今日发药记录</h2>
+  <table>
+    <thead><tr><th>处方号</th><th>患者</th><th>发药时间</th></tr></thead>
+    <tbody>
+      {% for d in dispensed %}
+      <tr><td>{{ d.presc_no }}</td><td>{{ d.patient_name }}</td><td>{{ d.dispensed_at }}</td></tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">今日暂无发药记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

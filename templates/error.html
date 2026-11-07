@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}访问受限{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ code }} · {{ message }}</h2>
+  <p class="muted">当前账号无权访问该功能，或请求参数不合法。</p>
+  <p><a class="btn" href="{{ url_for('index') }}">返回首页</a></p>
+</div>
+{% endblock %}

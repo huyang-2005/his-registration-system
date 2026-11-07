@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}导入结果 · 药品字典{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>导入结果</h2>
+  <p>文件：<b>{{ filename }}</b></p>
+  <div class="stats">
+    <div class="stat"><div class="num">{{ result.success }}</div><div class="lbl">成功入库</div></div>
+    <div class="stat"><div class="num">{{ result.failed }}</div><div class="lbl">失败行数</div></div>
+  </div>
+</div>
+{% if result.errors %}
+<div class="card">
+  <h3>错误行报告</h3>
+  <table>
+    <thead><tr><th>CSV 行号</th><th>失败原因</th></tr></thead>
+    <tbody>
+      {% for e in result.errors %}
+      <tr><td>{{ e.row }}</td><td>{{ e.reason }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+<p><a class="btn" href="{{ url_for('drugs') }}">返回药品字典</a></p>
+{% endblock %}

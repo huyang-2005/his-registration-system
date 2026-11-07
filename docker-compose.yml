@@ -1,0 +1,20 @@
+services:
+  his:
+    build: .
+    container_name: his-app
+    ports:
+      - "8000:8000"
+    environment:
+      HIS_DB_PATH: /data/his.db
+      HIS_DATA_DIR: /data
+      SECRET_KEY: ${SECRET_KEY:?请在 .env 中设置 SECRET_KEY}
+      HIS_DEMO_PASSWORD: ${HIS_DEMO_PASSWORD:-His@123456}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+    volumes:
+      - his_data:/data
+    restart: unless-stopped
+
+volumes:
+  his_data:

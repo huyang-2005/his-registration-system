@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}医生开方 · 门诊挂号与收费发药分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>医生开方（金额由后端按药品单价自动计算）</h2>
+  <form method="post" action="{{ url_for('prescription_create') }}" id="presc-form">
+    <div class="form-row">
+      <div class="field" style="flex:1">
+        <label>选择今日挂号单 *</label>
+        <select name="reg_id" required style="min-width:520px">
+          <option value="">-- 请选择 --</option>
+          {% for r in registrations %}
+          <option value="{{ r.reg_id }}" {% if selected_reg == r.reg_id|string %}selected{% endif %}>
+            {{ r.reg_no }} / {{ r.patient_name }} / {{ r.dept_name }} {{ r.doctor_name }} / 排队 {{ r.queue_no }} / {{ '已收费' if r.pay_status == '已支付' else '未收费' }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field" style="flex:1"><label>诊断 *</label><input name="diagnosis" required placeholder="如 上呼吸道感染" style="width:100%"></div>
+    </div>
+
+    <h3>药品明细</h3>
+    <div id="drug-rows"></div>
+    <p><button type="button" class="btn-sm btn-plain" onclick="addRow()">+ 添加药品</button></p>
+    <p class="muted">提示：处方金额以药品档案单价为准，前端展示仅作参考。</p>
+    <p>预计合计：<b id="total">0.00</b> 元</p>
+    <button type="submit">提交处方并划价</button>
+  </form>
+</div>
+
+<script>
+const DRUGS = {{ drugs|tojson }};
+function addRow() {
+  const box = document.getElementById('drug-rows');
+  const row = document.createElement('div');
+  row.className = 'form-row drug-row';
+  const options = DRUGS.map(d =>
+    `<option value="${d.drug_id}" data-price="${d.price}" data-stock="${d.stock}">${d.generic_name} / ${d.spec} / ${d.price.toFixed(2)} 元 / 库存 ${d.stock}</option>`
+  ).join('');
+  row.innerHTML = `
+    <div class="field" style="flex:1"><label>药品</label>
+      <select name="drug_id" required onchange="recalc()" style="min-width:380px">
+        <option value="">-- 选择药品 --</option>${options}
+      </select>
+    </div>
+    <div class="field"><label>数量</label><input name="quantity" type="number" min="1" value="1" required onchange="recalc()" oninput="recalc()"></div>
+    <div class="field"><label>小计</label><span class="subtotal">0.00</span></div>
+    <button type="button" class="btn-sm btn-danger" onclick="this.parentElement.remove(); recalc()">删除</button>`;
+  box.appendChild(row);
+  recalc();
+}
+function recalc() {
+  let total = 0;
+  document.querySelectorAll('.drug-row').forEach(row => {
+    const select = row.querySelector('select[name=drug_id]');
+    const qty = parseInt(row.querySelector('input[name=quantity]').value || '0');
+    const price = parseFloat(select.selectedOptions[0]?.dataset.price || '0');
+    const sub = price * qty;
+    row.querySelector('.subtotal').textContent = sub.toFixed(2);
+    total += sub;
+  });
+  document.getElementById('total').textContent = total.toFixed(2);
+}
+addRow();
+</script>
+{% endblock %}

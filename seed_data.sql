@@ -6,10 +6,11 @@
 PRAGMA foreign_keys = ON;
 
 -- ---------------------- 系统用户 ----------------------
+-- 密码字段留空，由迁移脚本 003 统一写入 bcrypt 哈希，仓库中不出现明文密码
 INSERT INTO sys_user (username, password, real_name, role) VALUES
-('guahao',  '123456', '张芳',  '挂号员'),
-('shoufei', '123456', '李强',  '收费员'),
-('admin',   '123456', '王管理', '管理员');
+('guahao',  '', '张芳',  '挂号员'),
+('shoufei', '', '李强',  '收费员'),
+('admin',   '', '王管理', '管理员');
 
 -- ---------------------- 科室 ----------------------
 INSERT INTO department (dept_code, dept_name, dept_type, location) VALUES

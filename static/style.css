@@ -11,19 +11,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  height: 56px;
+  padding: 0 18px;
+  min-height: 56px;
+  gap: 12px;
 }
-.topbar .brand { font-size: 16px; font-weight: 600; }
+.topbar .brand { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.topbar nav { display: flex; flex-wrap: wrap; gap: 2px 12px; flex: 1; }
 .topbar nav a {
   color: #e6f0ff;
   text-decoration: none;
-  margin-left: 18px;
-  font-size: 14px;
+  font-size: 13px;
+  padding: 4px 0;
 }
 .topbar nav a:hover { color: #fff; text-decoration: underline; }
+.userbox { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.user-role { font-size: 12px; color: #cfe0ff; }
 
-.container { max-width: 1180px; margin: 20px auto; padding: 0 16px; }
+.container { max-width: 1240px; margin: 20px auto; padding: 0 16px; }
 .card {
   background: #fff;
   border-radius: 8px;
@@ -34,8 +38,8 @@ body {
 h2 { margin: 0 0 14px; font-size: 18px; }
 h3 { margin: 18px 0 10px; font-size: 15px; }
 
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { border-bottom: 1px solid #e5e9ef; padding: 8px 10px; text-align: left; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { border-bottom: 1px solid #e5e9ef; padding: 8px 10px; text-align: left; vertical-align: top; }
 th { background: #f0f4fa; font-weight: 600; }
 tr:hover td { background: #fafcff; }
 
@@ -46,8 +50,8 @@ input, select {
   padding: 7px 9px;
   border: 1px solid #c7d0db;
   border-radius: 5px;
-  font-size: 14px;
-  min-width: 120px;
+  font-size: 13.5px;
+  min-width: 110px;
   background: #fff;
 }
 button, .btn {
@@ -56,16 +60,20 @@ button, .btn {
   border-radius: 5px;
   background: #1f6feb;
   color: #fff;
-  font-size: 14px;
+  font-size: 13.5px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 button:hover, .btn:hover { background: #1a5fca; }
-.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
 .btn-danger { background: #d9534f; }
 .btn-danger:hover { background: #c9302c; }
 .btn-success { background: #2e9e5b; }
 .btn-success:hover { background: #26814a; }
 .btn-plain { background: #6c7a89; }
+.btn-plain:hover { background: #596571; }
+.inline-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
 .flash { padding: 10px 14px; border-radius: 5px; margin-bottom: 14px; font-size: 14px; }
 .flash-success { background: #e3f6e9; color: #1e7a44; border: 1px solid #b7e4c7; }
@@ -73,18 +81,49 @@ button:hover, .btn:hover { background: #1a5fca; }
 
 .stats { display: flex; flex-wrap: wrap; gap: 14px; }
 .stat {
-  flex: 1 1 160px;
+  flex: 1 1 150px;
   background: #fff;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
 }
-.stat .num { font-size: 26px; font-weight: 700; color: #1f6feb; }
+.stat .num { font-size: 24px; font-weight: 700; color: #1f6feb; }
 .stat .lbl { font-size: 13px; color: #6b7b8c; margin-top: 6px; }
 
-.tag { padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+.tag { padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
 .tag-ok { background: #e3f6e9; color: #1e7a44; }
 .tag-warn { background: #fff4e0; color: #a96b00; }
+.tag-danger { background: #fdeaea; color: #b02a2a; }
 .tag-muted { background: #eceff3; color: #66727f; }
 .muted { color: #8494a4; font-size: 13px; }
 .footer { text-align: center; color: #98a6b5; font-size: 12px; padding: 24px; }
+
+.disclaimer {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #fff8e6;
+  border-left: 4px solid #f0ad4e;
+  color: #8a6100;
+  font-size: 13.5px;
+}
+
+.login-body {
+  background: linear-gradient(135deg, #eaf2ff, #f7fbff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.login-card {
+  background: #fff;
+  width: 360px;
+  padding: 30px 28px;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(31, 111, 235, .15);
+}
+.login-card h1 { margin: 0; font-size: 22px; color: #1f6feb; }
+.login-card .muted { margin: 6px 0 18px; }
+.login-card .field { margin-bottom: 12px; }
+.login-card input { width: 100%; }
+.login-hint { margin-top: 18px; padding-top: 14px; border-top: 1px dashed #dfe6ef; font-size: 12px; color: #6b7b8c; line-height: 1.8; }
+.login-hint b { color: #1f6feb; }

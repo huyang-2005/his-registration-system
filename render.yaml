@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: his-outpatient
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/refresh_demo_data.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: HIS_DB_PATH
+        value: /tmp/his.db
+      - key: HIS_DATA_DIR
+        value: /tmp/data
+      - key: HIS_DEMO_PASSWORD
+        value: His@123456
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_BASE_URL
+        value: https://api.deepseek.com
+      - key: DEEPSEEK_MODEL
+        value: deepseek-chat
+      - key: COOKIE_SECURE
+        value: "1"
