@@ -1,26 +1,30 @@
 {% extends "base.html" %}
-{% block title %}首页 · 门诊挂号分系统{% endblock %}
+{% block title %}首页 · 门诊挂号与收费发药分系统{% endblock %}
 {% block content %}
 <div class="card">
   <h2>今日门诊概览（{{ today }}）</h2>
   <div class="stats">
     <div class="stat"><div class="num">{{ stats.today_reg }}</div><div class="lbl">今日挂号量</div></div>
     <div class="stat"><div class="num">{{ stats.today_refund }}</div><div class="lbl">今日退号量</div></div>
-    <div class="stat"><div class="num">{{ '%.2f'|format(stats.today_income) }}</div><div class="lbl">今日收费金额（元）</div></div>
+    <div class="stat"><div class="num">{{ '%.2f'|format(stats.today_income) }}</div><div class="lbl">挂号收费（元）</div></div>
+    <div class="stat"><div class="num">{{ '%.2f'|format(stats.presc_income) }}</div><div class="lbl">处方收费（元）</div></div>
+    <div class="stat"><div class="num">{{ stats.pending_presc }}</div><div class="lbl">待收费处方</div></div>
+    <div class="stat"><div class="num">{{ stats.pending_dispense }}</div><div class="lbl">待发药处方</div></div>
     <div class="stat"><div class="num">{{ stats.schedule_today }}</div><div class="lbl">今日排班数</div></div>
     <div class="stat"><div class="num">{{ stats.patient_total }}</div><div class="lbl">建档患者总数</div></div>
   </div>
 </div>
 
 <div class="card">
-  <h2>功能导航</h2>
-  <p class="muted">本系统实现《医院信息系统基本功能规范》中门诊挂号分系统的核心业务。</p>
+  <h2>业务主线（按当前角色显示）</h2>
+  <p class="muted">A 路线闭环：登录权限 → 挂号 → 开方 → 收费 → 发药 → 报表。</p>
   <p>
-    <a class="btn" href="{{ url_for('patients') }}">患者建档</a>
-    <a class="btn" href="{{ url_for('register') }}">门诊挂号</a>
-    <a class="btn" href="{{ url_for('registrations') }}">挂号查询 / 退号 / 收费</a>
-    <a class="btn" href="{{ url_for('schedules') }}">排班与号源维护</a>
-    <a class="btn" href="{{ url_for('report') }}">门诊量统计报表</a>
+    {% if current_user.role in ('admin', 'cashier') %}<a class="btn" href="{{ url_for('register') }}">① 挂号</a>{% endif %}
+    {% if current_user.role in ('admin', 'doctor') %}<a class="btn" href="{{ url_for('prescription_new') }}">② 开方</a>{% endif %}
+    {% if current_user.role in ('admin', 'cashier') %}<a class="btn" href="{{ url_for('cashier') }}">③ 收费</a>{% endif %}
+    {% if current_user.role in ('admin', 'pharmacist') %}<a class="btn" href="{{ url_for('pharmacy') }}">④ 发药</a>{% endif %}
+    {% if current_user.role in ('admin', 'cashier') %}<a class="btn" href="{{ url_for('report') }}">⑤ 报表</a>{% endif %}
+    <a class="btn btn-plain" href="{{ url_for('triage_page') }}">AI 智能分诊</a>
   </p>
 </div>
 {% endblock %}

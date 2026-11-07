@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}AI 智能分诊 · 门诊挂号与收费发药分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>AI 智能分诊（辅助分诊，不作诊断）</h2>
+  <p class="muted">输入患者症状描述，系统给出建议科室与紧急程度。AI 输出仅供参考，必须由医生确认。</p>
+  <form method="post" action="{{ url_for('triage_form') }}">
+    <div class="form-row">
+      <div class="field" style="flex:1">
+        <label>症状描述</label>
+        <input name="symptoms" value="{{ symptoms }}" placeholder="如：肚子疼、发烧两天" style="width:100%" required>
+      </div>
+      <button type="submit">获取分诊建议</button>
+    </div>
+  </form>
+</div>
+
+{% if result %}
+<div class="card">
+  <h2>分诊建议</h2>
+  <div class="stats">
+    <div class="stat"><div class="num">{{ result.department }}</div><div class="lbl">建议科室</div></div>
+    <div class="stat">
+      <div class="num">
+        <span class="tag {% if result.urgency == '急诊' %}tag-danger{% elif result.urgency == '尽快' %}tag-warn{% else %}tag-ok{% endif %}">{{ result.urgency }}</span>
+      </div>
+      <div class="lbl">紧急程度</div>
+    </div>
+    <div class="stat"><div class="num">{{ 'AI' if result.source == 'ai' else '兜底' }}</div><div class="lbl">结果来源</div></div>
+  </div>
+  <h3>注意事项</h3>
+  <ul>
+    {% for a in result.advice %}<li>{{ a }}</li>{% endfor %}
+  </ul>
+  {% if result.note %}<p class="muted">{{ result.note }}</p>{% endif %}
+  <div class="disclaimer">{{ result.disclaimer }}</div>
+</div>
+{% endif %}
+{% endblock %}

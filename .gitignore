@@ -5,3 +5,11 @@ __pycache__/
 .vscode/
 .idea/
 *.log
+data/
+*.db
+his.db
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/

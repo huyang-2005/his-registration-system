@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}收费台 · 门诊挂号与收费发药分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>待收费处方（{{ prescriptions|length }} 张）</h2>
+  <table>
+    <thead><tr><th>处方号</th><th>挂号单</th><th>患者</th><th>科室/医生</th><th>诊断</th>
+        <th>明细</th><th>金额</th><th>收费</th></tr></thead>
+    <tbody>
+      {% for p in prescriptions %}
+      <tr>
+        <td>{{ p.presc_no }}</td>
+        <td>{{ p.reg_no }}<span class="muted">（{{ p.queue_no }}号）</span></td>
+        <td>{{ p.patient_name }}<span class="muted">（{{ p.patient_type }}）</span></td>
+        <td>{{ p.dept_name }} / {{ p.doctor_name }}</td>
+        <td>{{ p.diagnosis }}</td>
+        <td>
+          {% for item in items.get(p.presc_id, []) %}
+            <div>{{ item.drug_name }} ×{{ item.quantity }} = {{ '%.2f'|format(item.amount) }}</div>
+          {% endfor %}
+        </td>
+        <td><b>{{ '%.2f'|format(p.total_amount) }}</b></td>
+        <td>
+          <form method="post" action="{{ url_for('prescription_pay', presc_id=p.presc_id) }}" class="inline-form">
+            <select name="pay_type" class="btn-sm">
+              <option>现金</option><option>医保</option><option>微信</option><option>支付宝</option>
+            </select>
+            <button class="btn-sm btn-success" type="submit">确认收费</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">暂无待收费处方</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>今日处方收费记录</h2>
+  <table>
+    <thead><tr><th>处方号</th><th>患者</th><th>金额</th><th>支付方式</th><th>时间</th><th>状态</th></tr></thead>
+    <tbody>
+      {% for h in history %}
+      <tr><td>{{ h.presc_no }}</td><td>{{ h.patient_name }}</td><td>{{ '%.2f'|format(h.amount) }}</td>
+          <td>{{ h.pay_type }}</td><td>{{ h.pay_time }}</td><td>{{ h.status }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">今日暂无处方收费记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}基础数据维护 · 门诊挂号分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>新增科室</h2>
+  <form method="post" action="{{ url_for('department_create') }}">
+    <div class="form-row">
+      <div class="field"><label>科室编码 *</label><input name="dept_code" placeholder="如 D001" required></div>
+      <div class="field"><label>科室名称 *</label><input name="dept_name" placeholder="如 内科" required></div>
+      <div class="field"><label>类型 *</label>
+        <select name="dept_type"><option>门诊</option><option>急诊</option></select>
+      </div>
+      <div class="field"><label>位置</label><input name="location" placeholder="如 门诊楼2层"></div>
+      <button type="submit">新增科室</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>科室列表</h2>
+  <table>
+    <thead><tr><th>编码</th><th>名称</th><th>类型</th><th>位置</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for d in depts %}
+      <tr>
+        <td>{{ d.dept_code }}</td><td>{{ d.dept_name }}</td><td>{{ d.dept_type }}</td>
+        <td>{{ d.location or '-' }}</td>
+        <td>
+          {% if d.status == '启用' %}<span class="tag tag-ok">启用</span>
+          {% else %}<span class="tag tag-warn">停用</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('department_toggle', dept_id=d.dept_id) }}" style="display:inline">
+            <button class="btn-sm {% if d.status == '启用' %}btn-danger{% else %}btn-success{% endif %}" type="submit">
+              {% if d.status == '启用' %}停用{% else %}启用{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>新增医生</h2>
+  <form method="post" action="{{ url_for('doctor_create') }}">
+    <div class="form-row">
+      <div class="field"><label>医生编码 *</label><input name="doctor_code" placeholder="如 DR001" required></div>
+      <div class="field"><label>姓名 *</label><input name="doctor_name" required></div>
+      <div class="field"><label>所属科室 *</label>
+        <select name="dept_id" required>
+          <option value="">-- 请选择 --</option>
+          {% for d in depts if d.status == '启用' %}<option value="{{ d.dept_id }}">{{ d.dept_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>职称</label><input name="title" placeholder="如 主治医师"></div>
+      <div class="field"><label>性别</label>
+        <select name="gender"><option value="">--</option><option>男</option><option>女</option></select>
+      </div>
+      <button type="submit">新增医生</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>医生列表</h2>
+  <table>
+    <thead><tr><th>编码</th><th>姓名</th><th>科室</th><th>职称</th><th>性别</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for d in doctors %}
+      <tr>
+        <td>{{ d.doctor_code }}</td><td>{{ d.doctor_name }}</td><td>{{ d.dept_name }}</td>
+        <td>{{ d.title or '-' }}</td><td>{{ d.gender or '-' }}</td>
+        <td>
+          {% if d.status == '在岗' %}<span class="tag tag-ok">在岗</span>
+          {% else %}<span class="tag tag-warn">离岗</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('doctor_toggle', doctor_id=d.doctor_id) }}" style="display:inline">
+            <button class="btn-sm {% if d.status == '在岗' %}btn-danger{% else %}btn-success{% endif %}" type="submit">
+              {% if d.status == '在岗' %}离岗{% else %}在岗{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

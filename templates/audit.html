@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}审计日志 · 门诊挂号与收费发药分系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>操作审计日志</h2>
+  <form method="get" class="form-row">
+    <div class="field"><label>用户</label>
+      <select name="user_id">
+        <option value="">全部</option>
+        {% for u in users %}
+        <option value="{{ u.user_id }}" {% if user_id|string == u.user_id|string %}selected{% endif %}>{{ u.username }}（{{ u.user_id }}）</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>动作</label>
+      <select name="action">
+        <option value="">全部</option>
+        {% for a in actions %}
+        <option value="{{ a.action }}" {% if action == a.action %}selected{% endif %}>{{ a.action }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>开始日期</label><input type="date" name="start" value="{{ start }}"></div>
+    <div class="field"><label>结束日期</label><input type="date" name="end" value="{{ end }}"></div>
+    <button type="submit">查询</button>
+    <a class="btn btn-plain" href="{{ url_for('audit_page') }}">重置</a>
+  </form>
+  <p class="muted">共 {{ logs|length }} 条（最多显示最近 200 条）。写操作由中间件自动留痕，无需业务代码重复记录。</p>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>时间</th><th>用户</th><th>动作</th><th>对象</th><th>详情</th><th>IP</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.created_at }}</td>
+        <td>{{ log.username or '-' }}</td>
+        <td><span class="tag tag-ok">{{ log.action }}</span></td>
+        <td>{{ log.object_type or '-' }}{% if log.object_id %} #{{ log.object_id }}{% endif %}</td>
+        <td>{{ log.detail or '' }}</td>
+        <td>{{ log.ip or '-' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">暂无审计记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

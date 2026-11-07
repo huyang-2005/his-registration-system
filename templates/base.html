@@ -3,20 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}门诊挂号分系统{% endblock %}</title>
+  <title>{% block title %}门诊挂号与收费发药分系统{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">医院信息系统 · 门诊挂号分系统</div>
+  <div class="brand">医院信息系统 · 门诊挂号与收费发药分系统</div>
   <nav>
     <a href="{{ url_for('index') }}">首页</a>
-    <a href="{{ url_for('patients') }}">患者建档</a>
-    <a href="{{ url_for('register') }}">门诊挂号</a>
-    <a href="{{ url_for('registrations') }}">挂号查询</a>
-    <a href="{{ url_for('schedules') }}">排班号源</a>
-    <a href="{{ url_for('report') }}">统计报表</a>
+    {% if current_user %}
+      {% if current_user.role in ('admin', 'cashier', 'doctor') %}<a href="{{ url_for('patients') }}">患者建档</a>{% endif %}
+      {% if current_user.role in ('admin', 'cashier') %}<a href="{{ url_for('register') }}">门诊挂号</a>{% endif %}
+      {% if current_user.role in ('admin', 'cashier', 'doctor') %}<a href="{{ url_for('registrations') }}">挂号查询</a>{% endif %}
+      {% if current_user.role in ('admin', 'cashier') %}<a href="{{ url_for('schedules') }}">排班号源</a>{% endif %}
+      {% if current_user.role in ('admin', 'pharmacist', 'doctor') %}<a href="{{ url_for('drugs') }}">药品字典</a>{% endif %}
+      {% if current_user.role in ('admin', 'doctor') %}<a href="{{ url_for('prescription_new') }}">医生开方</a>{% endif %}
+      {% if current_user.role in ('admin', 'cashier') %}<a href="{{ url_for('cashier') }}">收费台</a>{% endif %}
+      {% if current_user.role in ('admin', 'pharmacist') %}<a href="{{ url_for('pharmacy') }}">药房发药</a>{% endif %}
+      {% if current_user.role == 'admin' %}<a href="{{ url_for('base_data') }}">基础数据</a>{% endif %}
+      {% if current_user.role == 'admin' %}<a href="{{ url_for('audit_page') }}">审计日志</a>{% endif %}
+      {% if current_user.role in ('admin', 'cashier') %}<a href="{{ url_for('report') }}">统计报表</a>{% endif %}
+      <a href="{{ url_for('triage_page') }}">智能分诊</a>
+    {% endif %}
   </nav>
+  {% if current_user %}
+  <div class="userbox">
+    <span class="user-role">{{ current_user.real_name }} · {{ {'admin':'管理员','doctor':'医生','cashier':'收费员','pharmacist':'药师'}[current_user.role] }}</span>
+    <form method="post" action="{{ url_for('logout') }}" style="display:inline">
+      <button class="btn-sm btn-plain" type="submit">退出</button>
+    </form>
+  </div>
+  {% endif %}
 </header>
 
 <main class="container">
@@ -30,6 +47,6 @@
   {% block content %}{% endblock %}
 </main>
 
-<footer class="footer">门诊挂号分系统实训项目 · SQLite 演示数据</footer>
+<footer class="footer">门诊挂号与收费发药分系统 · 教学演示项目 · SQLite</footer>
 </body>
 </html>
