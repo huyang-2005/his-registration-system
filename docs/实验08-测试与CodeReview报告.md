@@ -8,7 +8,7 @@
 | API 测试 | FastAPI TestClient | `tests/test_registration_api.py`、`tests/test_pharmacy_api.py`、`tests/test_auth.py` | 401/403/409/400、金额后端计算、重复收费、库存不足回滚、发药状态机 |
 | 数据导入测试 | pytest | `tests/test_csv_import.py` | 表头缺失、空文件、非法单价、重复行、错误行不影响合法行、GBK 编码 |
 | 审计/报表测试 | pytest | `tests/test_audit_report.py` | 写操作留痕、按用户/动作过滤、报表金额与操作一致 |
-| E2E | Playwright | `tests/e2e/test_main_flow.py` | 登录 → 挂号 → 收费 → 发药 主流程（`RUN_E2E=1` 时执行） |
+| E2E | Playwright | `tests/e2e/test_main_flow.py` | 登录 → 建档 → 挂号 → 开方 → 收费 → 发药 → 报表 全流程（`RUN_E2E=1` 时执行） |
 
 ## 二、运行结果
 
@@ -17,6 +17,19 @@ python -m pytest tests -q --ignore=tests/e2e
 .........................................                                [100%]
 41 passed
 ```
+
+E2E（真实浏览器，服务需先在 8000 端口运行）：
+
+```text
+pip install -r requirements-dev.txt
+python -m playwright install chromium
+set RUN_E2E=1
+python -m pytest tests/e2e -q
+.                                                                        [100%]
+1 passed
+```
+
+全量（含 E2E）：`42 passed`。E2E 最近一次实测时间 2026-11-08，覆盖 4 个角色连续登录与状态机流转。
 
 覆盖率（`--cov=app`）：
 

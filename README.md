@@ -86,9 +86,11 @@ python -m pytest tests -q --ignore=tests/e2e
 python scripts/verify_rbac.py
 ```
 
-E2E（需先安装 Playwright 浏览器）：
+E2E（Playwright，需先启动 8000 端口服务）：
 
 ```bash
+pip install -r requirements-dev.txt
+python -m playwright install chromium
 set RUN_E2E=1
 python -m pytest tests/e2e -q
 ```

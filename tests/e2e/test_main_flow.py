@@ -3,7 +3,7 @@
 运行前置：
 1) pip install -r requirements-dev.txt
 2) playwright install chromium
-3) 启动服务：uvicorn main:app --port 8000
+3) 启动服务：python -m uvicorn app.main:app --port 8000
 4) 设置 RUN_E2E=1 后执行：pytest tests/e2e -q
 """
 import os
@@ -33,12 +33,13 @@ def test_full_outpatient_flow():
 
     suffix = str(int(time.time()))[-6:]
     patient_name = "E2E患者" + suffix
-    id_card = "11010119900101" + suffix
+    id_card = "110101199001" + suffix
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
         context = browser.new_context()
         page = context.new_page()
+        page.on("dialog", lambda dialog: dialog.accept())
 
         login(page, "cashier")
         page.goto(BASE_URL + "/patients")
@@ -46,13 +47,13 @@ def test_full_outpatient_flow():
         page.select_option("select[name=gender]", "男")
         page.fill("input[name=id_card]", id_card)
         page.fill("input[name=phone]", "13500000000")
-        page.click("button[type=submit]")
+        page.click("button:has-text('保存建档')")
         expect(page.locator(".flash-success")).to_contain_text("建档成功")
 
         page.goto(BASE_URL + "/register")
         page.select_option("select[name=schedule_id]", index=1)
         page.select_option("select[name=patient_id]", label=str([o for o in page.locator("select[name=patient_id] option").all() if patient_name in o.inner_text()][0].inner_text()))
-        page.click("button[type=submit]")
+        page.click("button:has-text('确认挂号')")
         expect(page.locator(".flash-success")).to_contain_text("挂号成功")
 
         context.clear_cookies()
@@ -62,7 +63,7 @@ def test_full_outpatient_flow():
         page.fill("input[name=diagnosis]", "上呼吸道感染")
         page.select_option("select[name=drug_id]", index=1)
         page.fill("input[name=quantity]", "2")
-        page.click("button[type=submit]")
+        page.click("button:has-text('提交处方并划价')")
         expect(page.locator(".flash-success")).to_contain_text("开方成功")
 
         context.clear_cookies()
